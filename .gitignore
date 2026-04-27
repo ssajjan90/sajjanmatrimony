@@ -1,0 +1,49 @@
+# Environment files - never commit real secrets
+.env
+**/.env
+
+# Backend
+backend/target/
+backend/uploads/
+*.class
+*.jar
+*.war
+*.nar
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# Maven
+.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+# IDE
+.idea/
+*.iml
+*.iws
+*.ipr
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Node / React Native / React
+node_modules/
+npm-debug.log*
+yarn-error.log*
+.expo/
+dist/
+build/
+.cache/
+
+# Expo
+mobile-app/.expo/
+mobile-app/android/
+mobile-app/ios/
+
+# Logs
+*.log
+logs/
