@@ -1,0 +1,799 @@
+{
+  "info": {
+    "_postman_id": "sajjan-matrimony-collection-v1",
+    "name": "Sajjan Matrimony API",
+    "description": "Complete API collection for Sajjan Matrimony backend. Base URL: {{baseUrl}}\n\n## Setup\n1. Import `sajjan-matrimony.postman_environment.json` as the active environment.\n2. Run **Register** then **Login** — tokens and IDs are captured automatically.\n3. For admin operations, register a second user, manually set the `ADMIN` role in MongoDB, then log in with `Admin Login`.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080/api/v1",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "description": "Authentication endpoints — all public, no token required.",
+      "item": [
+        {
+          "name": "Register",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const res = pm.response.json();",
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "pm.test('success flag true', () => pm.expect(res.success).to.be.true);",
+                  "if (res.data) {",
+                  "    pm.environment.set('userId', res.data.id);",
+                  "    pm.environment.set('userEmail', res.data.email);",
+                  "    console.log('Registered userId:', res.data.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Raj Kumar\",\n  \"email\": \"raj.kumar@example.com\",\n  \"mobile\": \"9876543210\",\n  \"password\": \"Password@123\",\n  \"gender\": \"MALE\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "register"]
+            }
+          }
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const res = pm.response.json();",
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('access token present', () => pm.expect(res.data.accessToken).to.be.a('string'));",
+                  "if (res.data) {",
+                  "    pm.environment.set('accessToken', res.data.accessToken);",
+                  "    pm.environment.set('refreshToken', res.data.refreshToken);",
+                  "    pm.environment.set('userId', res.data.user.id);",
+                  "    console.log('Access token stored.');",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"emailOrMobile\": \"raj.kumar@example.com\",\n  \"password\": \"Password@123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Refresh Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const res = pm.response.json();",
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "if (res.data) {",
+                  "    pm.environment.set('accessToken', res.data.accessToken);",
+                  "    pm.environment.set('refreshToken', res.data.refreshToken);",
+                  "    console.log('Token refreshed.');",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/refresh?refreshToken={{refreshToken}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "refresh"],
+              "query": [
+                { "key": "refreshToken", "value": "{{refreshToken}}" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Admin Login",
+          "description": "Login as admin. Requires a user with ADMIN role set in MongoDB.",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const res = pm.response.json();",
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "if (res.data) {",
+                  "    pm.environment.set('adminToken', res.data.accessToken);",
+                  "    pm.environment.set('adminUserId', res.data.user.id);",
+                  "    console.log('Admin token stored.');",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"emailOrMobile\": \"admin@sajjanmatrimony.com\",\n  \"password\": \"AdminPass@123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Profiles",
+      "description": "Profile CRUD and search. Most write operations require a Bearer token.",
+      "item": [
+        {
+          "name": "Create Profile",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const res = pm.response.json();",
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "pm.test('success flag true', () => pm.expect(res.success).to.be.true);",
+                  "if (res.data && res.data.id) {",
+                  "    pm.environment.set('profileId', res.data.id);",
+                  "    console.log('Profile created:', res.data.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Raj Kumar\",\n  \"gender\": \"MALE\",\n  \"dateOfBirth\": \"1995-06-15\",\n  \"height\": \"5'10\\\"\",\n  \"maritalStatus\": \"NEVER_MARRIED\",\n  \"motherTongue\": \"Kannada\",\n  \"caste\": \"Brahmin\",\n  \"education\": \"B.Tech Computer Science\",\n  \"occupation\": \"Software Engineer\",\n  \"annualIncome\": \"12 LPA\",\n  \"city\": \"Bangalore\",\n  \"nativePlace\": \"Mysore\",\n  \"aboutMe\": \"Software engineer passionate about technology and family values.\",\n  \"partnerPreferences\": {\n    \"minAge\": 23,\n    \"maxAge\": 30,\n    \"city\": [\"Bangalore\", \"Mysore\"],\n    \"education\": \"Graduate and above\",\n    \"maritalStatus\": \"NEVER_MARRIED\"\n  },\n  \"additionalDetails\": {\n    \"gotra\": \"Bharadwaja\",\n    \"diet\": \"Vegetarian\",\n    \"hobbies\": [\"Reading\", \"Trekking\", \"Cooking\"],\n    \"familyType\": \"Nuclear\",\n    \"horoscope\": \"Mesha\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/profiles",
+              "host": ["{{baseUrl}}"],
+              "path": ["profiles"]
+            }
+          }
+        },
+        {
+          "name": "Get My Profile",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const res = pm.response.json();",
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('profile data present', () => pm.expect(res.data).to.be.an('object'));",
+                  "if (res.data && res.data.id) {",
+                  "    pm.environment.set('profileId', res.data.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/profiles/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["profiles", "me"]
+            }
+          }
+        },
+        {
+          "name": "Update Profile",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const res = pm.response.json();",
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('success flag true', () => pm.expect(res.success).to.be.true);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Raj Kumar\",\n  \"gender\": \"MALE\",\n  \"dateOfBirth\": \"1995-06-15\",\n  \"height\": \"5'10\\\"\",\n  \"maritalStatus\": \"NEVER_MARRIED\",\n  \"motherTongue\": \"Kannada\",\n  \"caste\": \"Brahmin\",\n  \"education\": \"M.Tech Computer Science\",\n  \"occupation\": \"Senior Software Engineer\",\n  \"annualIncome\": \"18 LPA\",\n  \"city\": \"Bangalore\",\n  \"nativePlace\": \"Mysore\",\n  \"aboutMe\": \"Senior software engineer with 5+ years experience, loves family time.\",\n  \"partnerPreferences\": {\n    \"minAge\": 23,\n    \"maxAge\": 30,\n    \"city\": [\"Bangalore\", \"Mysore\", \"Hubli\"],\n    \"education\": \"Graduate and above\",\n    \"maritalStatus\": \"NEVER_MARRIED\"\n  },\n  \"additionalDetails\": {\n    \"gotra\": \"Bharadwaja\",\n    \"diet\": \"Vegetarian\",\n    \"hobbies\": [\"Reading\", \"Trekking\", \"Photography\"],\n    \"familyType\": \"Nuclear\",\n    \"horoscope\": \"Mesha\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/profiles/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["profiles", "me"]
+            }
+          }
+        },
+        {
+          "name": "Get Profile by ID",
+          "description": "Public endpoint — no auth required.",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const res = pm.response.json();",
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('profile data present', () => pm.expect(res.data).to.be.an('object'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/profiles/{{targetProfileId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["profiles", "{{targetProfileId}}"]
+            }
+          }
+        },
+        {
+          "name": "Search Profiles",
+          "description": "Public endpoint — no auth required. All query params are optional filters.",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const res = pm.response.json();",
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('page response structure', () => {",
+                  "    pm.expect(res.data).to.have.property('content');",
+                  "    pm.expect(res.data).to.have.property('totalElements');",
+                  "});",
+                  "if (res.data.content && res.data.content.length > 0) {",
+                  "    pm.environment.set('targetProfileId', res.data.content[0].id);",
+                  "    console.log('targetProfileId set to:', res.data.content[0].id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/profiles/search?gender=FEMALE&minAge=22&maxAge=30&city=Bangalore&page=0&size=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["profiles", "search"],
+              "query": [
+                { "key": "gender", "value": "FEMALE", "description": "MALE or FEMALE" },
+                { "key": "minAge", "value": "22" },
+                { "key": "maxAge", "value": "30" },
+                { "key": "city", "value": "Bangalore" },
+                { "key": "education", "value": "", "disabled": true },
+                { "key": "occupation", "value": "", "disabled": true },
+                { "key": "maritalStatus", "value": "", "disabled": true, "description": "NEVER_MARRIED, DIVORCED, WIDOWED" },
+                { "key": "caste", "value": "", "disabled": true },
+                { "key": "page", "value": "0", "description": "0-indexed page number" },
+                { "key": "size", "value": "10" }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Interests",
+      "description": "Express, accept, reject, and list interests. All endpoints require authentication.",
+      "item": [
+        {
+          "name": "Express Interest",
+          "description": "Send interest to another profile. Uses {{targetProfileId}}.",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const res = pm.response.json();",
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "pm.test('success flag true', () => pm.expect(res.success).to.be.true);",
+                  "if (res.data && res.data.id) {",
+                  "    pm.environment.set('interestId', res.data.id);",
+                  "    console.log('Interest ID:', res.data.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/interests/{{targetProfileId}}?message=I liked your profile and would love to connect.",
+              "host": ["{{baseUrl}}"],
+              "path": ["interests", "{{targetProfileId}}"],
+              "query": [
+                {
+                  "key": "message",
+                  "value": "I liked your profile and would love to connect.",
+                  "description": "Optional personal message"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Accept Interest",
+          "description": "Accept a received interest. Uses {{interestId}}.",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const res = pm.response.json();",
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('status is ACCEPTED', () => pm.expect(res.data.status).to.equal('ACCEPTED'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"ACCEPTED\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/interests/{{interestId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["interests", "{{interestId}}"]
+            }
+          }
+        },
+        {
+          "name": "Reject Interest",
+          "description": "Reject a received interest. Uses {{interestId}}.",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const res = pm.response.json();",
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('status is REJECTED', () => pm.expect(res.data.status).to.equal('REJECTED'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"REJECTED\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/interests/{{interestId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["interests", "{{interestId}}"]
+            }
+          }
+        },
+        {
+          "name": "Get Sent Interests",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const res = pm.response.json();",
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('data is array', () => pm.expect(res.data).to.be.an('array'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/interests/sent",
+              "host": ["{{baseUrl}}"],
+              "path": ["interests", "sent"]
+            }
+          }
+        },
+        {
+          "name": "Get Received Interests",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const res = pm.response.json();",
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('data is array', () => pm.expect(res.data).to.be.an('array'));",
+                  "if (res.data && res.data.length > 0) {",
+                  "    pm.environment.set('interestId', res.data[0].id);",
+                  "    console.log('interestId set to first received interest:', res.data[0].id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/interests/received",
+              "host": ["{{baseUrl}}"],
+              "path": ["interests", "received"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Shortlist",
+      "description": "Manage shortlisted profiles. All endpoints require authentication.",
+      "item": [
+        {
+          "name": "Add to Shortlist",
+          "description": "Shortlist a profile by ID. Uses {{targetProfileId}}.",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const res = pm.response.json();",
+                  "pm.test('Status 200 or 201', () => pm.expect(pm.response.code).to.be.oneOf([200, 201]));",
+                  "pm.test('success flag true', () => pm.expect(res.success).to.be.true);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/shortlist/{{targetProfileId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["shortlist", "{{targetProfileId}}"]
+            }
+          }
+        },
+        {
+          "name": "Get Shortlist",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const res = pm.response.json();",
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('data is array', () => pm.expect(res.data).to.be.an('array'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/shortlist",
+              "host": ["{{baseUrl}}"],
+              "path": ["shortlist"]
+            }
+          }
+        },
+        {
+          "name": "Remove from Shortlist",
+          "description": "Remove a profile from shortlist. Uses {{targetProfileId}}.",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const res = pm.response.json();",
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('success flag true', () => pm.expect(res.success).to.be.true);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/shortlist/{{targetProfileId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["shortlist", "{{targetProfileId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin",
+      "description": "Admin moderation endpoints. Require ADMIN role — use {{adminToken}} (captured by Admin Login).",
+      "item": [
+        {
+          "name": "Get Pending Profiles",
+          "description": "List profiles awaiting admin approval.",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const res = pm.response.json();",
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('page response structure', () => pm.expect(res.data).to.have.property('content'));",
+                  "if (res.data.content && res.data.content.length > 0) {",
+                  "    pm.environment.set('pendingProfileId', res.data.content[0].id);",
+                  "    console.log('pendingProfileId:', res.data.content[0].id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/profiles/pending?page=0&size=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "profiles", "pending"],
+              "query": [
+                { "key": "page", "value": "0" },
+                { "key": "size", "value": "20" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Approve Profile",
+          "description": "Approve a profile. Uses {{pendingProfileId}}.",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const res = pm.response.json();",
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('profile approved', () => pm.expect(res.data.approved).to.be.true);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"APPROVED\",\n  \"remarks\": \"Profile verified and approved.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/profiles/{{pendingProfileId}}/action",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "profiles", "{{pendingProfileId}}", "action"]
+            }
+          }
+        },
+        {
+          "name": "Reject Profile",
+          "description": "Reject a profile with remarks. Uses {{pendingProfileId}}.",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const res = pm.response.json();",
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('success flag true', () => pm.expect(res.success).to.be.true);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"REJECTED\",\n  \"remarks\": \"Profile photo is blurry. Please upload a clear photo.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/profiles/{{pendingProfileId}}/action",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "profiles", "{{pendingProfileId}}", "action"]
+            }
+          }
+        },
+        {
+          "name": "List All Users",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const res = pm.response.json();",
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('page response structure', () => pm.expect(res.data).to.have.property('content'));",
+                  "if (res.data.content && res.data.content.length > 0) {",
+                  "    const nonAdmin = res.data.content.find(u => u.role !== 'ADMIN');",
+                  "    if (nonAdmin) {",
+                  "        pm.environment.set('targetUserId', nonAdmin.id);",
+                  "        console.log('targetUserId set to:', nonAdmin.id);",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/users?page=0&size=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "users"],
+              "query": [
+                { "key": "page", "value": "0" },
+                { "key": "size", "value": "20" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Block User",
+          "description": "Block a user account. Uses {{targetUserId}}.",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const res = pm.response.json();",
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('success flag true', () => pm.expect(res.success).to.be.true);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/users/{{targetUserId}}/block",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "users", "{{targetUserId}}", "block"]
+            }
+          }
+        },
+        {
+          "name": "Unblock User",
+          "description": "Unblock a user account. Uses {{targetUserId}}.",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const res = pm.response.json();",
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('success flag true', () => pm.expect(res.success).to.be.true);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/users/{{targetUserId}}/unblock",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "users", "{{targetUserId}}", "unblock"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
