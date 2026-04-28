@@ -1,0 +1,28 @@
+{
+  "expo": {
+    "name": "Sajjan Matrimony",
+    "slug": "sajjan-matrimony",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "resizeMode": "contain",
+      "backgroundColor": "#8B1A1A"
+    },
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.sajjanmatrimony.app"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#8B1A1A"
+      },
+      "package": "com.sajjanmatrimony.app"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    }
+  }
+}
